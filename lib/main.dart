@@ -75,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
         shrinkWrap: true,
         crossAxisCount: 3,
         padding: EdgeInsets.all(16.0),
-        childAspectRatio: 8.0 / 9.0,
+        childAspectRatio: 3.0 / 2.0,
         children: <Widget>[
           Card(
             clipBehavior: Clip.antiAlias,
