@@ -71,153 +71,215 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: GridView.count(
-        shrinkWrap: true,
-        crossAxisCount: 3,
-        padding: EdgeInsets.all(16.0),
-        childAspectRatio: 3.0 / 2.0,
-        children: <Widget>[
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Unencrypted packet info',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+      body: Column(
+        children: [
+          GridView.count(
+            shrinkWrap: true,
+            crossAxisCount: 3,
+            padding: EdgeInsets.all(16.0),
+            childAspectRatio: 3.0 / 1.8,
+            children: <Widget>[
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'Unencrypted packet info',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 8.0),
+                          TextField(
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              labelText: 'Unencrypted IP packet size in bytes',
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 8.0),
-                      TextField(
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          labelText: 'Unencrypted IP packet size in bytes',
+                    ),
+                  ],
+                ),
+              ),
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'GRE settings',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 8.0),
+                          Row(
+                            children: <Widget>[
+                              Text('GRE over IPsec'),
+                              Switch(value: greEnabled, onChanged: onGreToggle),
+                            ],
+                          ),
+                          SizedBox(height: 8.0),
+                          Row(
+                            children: <Widget>[
+                              Text('Tunnel keying'),
+                              SizedBox(
+                                width: 9.0,
+                              ),
+                              Switch(
+                                value: tunnelKeyEnabled,
+                                onChanged: onTunnelKeyToggle,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'IPsec settings',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 8.0),
+                          Row(
+                            children: <Widget>[
+                              Text('NAT traversal'),
+                              Switch(value: natEnabled, onChanged: onNatToggle),
+                            ],
+                          ),
+                          SizedBox(height: 8.0),
+                          Row(
+                            children: <Widget>[
+                              Text('IPsec mode:'),
+                              SizedBox(
+                                width: 9.0,
+                              ),
+                              Text('Transport'),
+                              Radio(
+                                value: 0,
+                                groupValue: ipsecMode,
+                                onChanged: onModeChanged,
+                              ),
+                              Text('Tunnel'),
+                              Radio(
+                                value: 1,
+                                groupValue: ipsecMode,
+                                onChanged: onModeChanged,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8.0),
+                          Column(
+                            children: [
+                              Text('ESP encryption and integrity'),
+                              DropdownButton<String>(
+                                value: chosenEspValue,
+                                items: <String>[
+                                  'AES128 + SHA1',
+                                  'AES128 + SHA256',
+                                  'AES256 + SHA1',
+                                  'AES256 + SHA256',
+                                  'AES128 GCM64',
+                                  'AES128 GCM128',
+                                  'AES256 GCM128',
+                                ].map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(value),
+                                  );
+                                }).toList(),
+                                onChanged: (var value) {
+                                  setState(() {
+                                    chosenEspValue = value as String;
+                                  });
+                                },
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 8.0),
+            child: Card(
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Output packet',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 8.0),
+                        Table(
+                          //defaultColumnWidth: FixedColumnWidth(200.0),
+                          columnWidths: {
+                            0: FixedColumnWidth(200.0),
+                            1: FixedColumnWidth(200.0),
+                            2: FixedColumnWidth(75.0),
+                          },
+                          border: TableBorder.all(
+                              color: Colors.black38,
+                              style: BorderStyle.solid,
+                              width: 1),
+                          children: [
+                            TableRow(children: [
+                              TableCell(
+                                child: Text(
+                                  'Packet group',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              TableCell(
+                                child: Text(
+                                  'Fields',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              TableCell(
+                                child: Text(
+                                  'Bytes',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ]),
+                          ],
+                        )
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'GRE settings',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 8.0),
-                      Row(
-                        children: <Widget>[
-                          Text('GRE over IPsec'),
-                          Switch(value: greEnabled, onChanged: onGreToggle),
-                        ],
-                      ),
-                      SizedBox(height: 8.0),
-                      Row(
-                        children: <Widget>[
-                          Text('Tunnel keying'),
-                          SizedBox(
-                            width: 9.0,
-                          ),
-                          Switch(
-                            value: tunnelKeyEnabled,
-                            onChanged: onTunnelKeyToggle,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'IPsec settings',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 8.0),
-                      Row(
-                        children: <Widget>[
-                          Text('NAT traversal'),
-                          Switch(value: natEnabled, onChanged: onNatToggle),
-                        ],
-                      ),
-                      SizedBox(height: 8.0),
-                      Row(
-                        children: <Widget>[
-                          Text('IPsec mode:'),
-                          SizedBox(
-                            width: 9.0,
-                          ),
-                          Text('Transport'),
-                          Radio(
-                            value: 0,
-                            groupValue: ipsecMode,
-                            onChanged: onModeChanged,
-                          ),
-                          Text('Tunnel'),
-                          Radio(
-                            value: 1,
-                            groupValue: ipsecMode,
-                            onChanged: onModeChanged,
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8.0),
-                      Column(
-                        children: [
-                          Text('ESP encryption and integrity'),
-                          DropdownButton<String>(
-                            value: chosenEspValue,
-                            items: <String>[
-                              'AES128 + SHA1',
-                              'AES128 + SHA256',
-                              'AES256 + SHA1',
-                              'AES256 + SHA256',
-                              'AES128 GCM64',
-                              'AES128 GCM128',
-                              'AES256 GCM128',
-                            ].map<DropdownMenuItem<String>>((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                            onChanged: (var value) {
-                              setState(() {
-                                chosenEspValue = value as String;
-                              });
-                            },
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           )
         ],
