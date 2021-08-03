@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
@@ -48,6 +49,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  var originalPktSize = 0;
   var greEnabled = false;
   var tunnelKeyEnabled = false;
   var natEnabled = false;
@@ -55,6 +57,11 @@ class _MyHomePageState extends State<MyHomePage> {
   // mode 1 = tunnel
   var ipsecMode = 0;
   var chosenEspValue = 'AES128 + SHA1';
+  var tableRows = [
+    {'group': 'first group', 'fields': 'first fields', 'bytes': '1'},
+    {'group': 'second group', 'fields': 'second fields', 'bytes': '2'},
+    {'group': 'third group', 'fields': 'third fields', 'bytes': '3'},
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +102,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           SizedBox(height: 8.0),
                           TextField(
+                            inputFormatters: <TextInputFormatter>[
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9]'))
+                            ],
+                            keyboardType: TextInputType.number,
+                            onChanged: onPktSizeChanged,
                             decoration: InputDecoration(
                               border: InputBorder.none,
                               labelText: 'Unencrypted IP packet size in bytes',
@@ -212,6 +225,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                   setState(() {
                                     chosenEspValue = value as String;
                                   });
+                                  print("enc = $chosenEspValue");
+                                  repopulate();
                                 },
                               ),
                             ],
@@ -273,6 +288,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               ),
                             ]),
+                            for (var row in tableRows)
+                              TableRow(children: [
+                                TableCell(
+                                  child: Text(row['group'] as String),
+                                ),
+                                TableCell(
+                                  child: Text(row['fields'] as String),
+                                ),
+                                TableCell(
+                                  child: Text(row['bytes'] as String),
+                                ),
+                              ]),
                           ],
                         )
                       ],
@@ -281,10 +308,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
+  }
+
+  void onPktSizeChanged(var pktSize) {
+    print("original pkt size = $pktSize");
+    originalPktSize = int.parse(pktSize);
+    repopulate();
   }
 
   void onGreToggle(bool value) {
@@ -297,6 +330,8 @@ class _MyHomePageState extends State<MyHomePage> {
         greEnabled = false;
       });
     }
+    print("gre = $greEnabled");
+    repopulate();
   }
 
   void onTunnelKeyToggle(bool value) {
@@ -309,6 +344,8 @@ class _MyHomePageState extends State<MyHomePage> {
         tunnelKeyEnabled = false;
       });
     }
+    print("tunnel key = $tunnelKeyEnabled");
+    repopulate();
   }
 
   void onNatToggle(bool value) {
@@ -321,11 +358,20 @@ class _MyHomePageState extends State<MyHomePage> {
         natEnabled = false;
       });
     }
+    print("nat = $natEnabled");
+    repopulate();
   }
 
   void onModeChanged(var value) {
     setState(() {
       ipsecMode = value;
     });
+    print("ipsec mode = $ipsecMode");
+    repopulate();
+  }
+
+  void repopulate() {
+    print(
+        'preparing list $originalPktSize $greEnabled $tunnelKeyEnabled $natEnabled $ipsecMode $chosenEspValue');
   }
 }
