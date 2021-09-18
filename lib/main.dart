@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -63,6 +64,8 @@ class _MyHomePageState extends State<MyHomePage> {
     {'group': 'third group', 'fields': 'third fields', 'bytes': '3'},
   ];
   num totalSize = 0;
+  num espIv = 0;
+  num payload = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -402,7 +405,6 @@ class _MyHomePageState extends State<MyHomePage> {
         totalSize += 8;
 
         // ESP IV
-        var espIv;
         if (chosenEspValue.contains('GCM')) {
           espIv = 8;
         } else {
@@ -412,7 +414,7 @@ class _MyHomePageState extends State<MyHomePage> {
         totalSize += espIv;
 
         // Original payload
-        var payload = originalPktSize - 20;
+        payload = originalPktSize - 20;
         tableRows.add({
           'group': 'Original packet',
           'fields': 'Payload',
@@ -422,9 +424,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
         // ESP trailer
         // Padding
-        tableRows
-            .add({'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '???'});
-        totalSize += 0;
+        num padding = calculatePadding();
+        tableRows.add(
+            {'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '$padding'});
+        totalSize += padding;
         // Pad length and next header
         tableRows.add({
           'group': 'ESP trailer',
@@ -446,5 +449,38 @@ class _MyHomePageState extends State<MyHomePage> {
         totalSize += espIcv;
       }
     });
+  }
+
+  num calculatePadding() {
+    num pad4 = get4Pad();
+    num pad16 = get16Pad();
+    if (chosenEspValue.contains('GCM')) {
+      // consider only 4pad
+      return pad4;
+    } else {
+      // consider max of 4pad and 16pad
+      return max(pad4, pad16);
+    }
+  }
+
+  num get4Pad() {
+    // ESP header + IV + GRE IP header + GRE header + GRE key + IPsec IP header + Payload + Trailer(2 bytes)
+    num espHeader = 8;
+    // TODO GRE
+    // TODO IPsec IP header
+    num trailerPadlenNhdr = 2;
+    num size = espHeader + espIv + payload + trailerPadlenNhdr;
+    num pad = (4 - (size % 4)) % 4;
+    return pad;
+  }
+
+  num get16Pad() {
+    // IPsec IP header + GRE IP header + GRE header + GRE key + Payload + Trailer
+    // TODO GRE
+    // TODO IPsec IP header
+    num trailerPadlenNhdr = 2;
+    num size = payload + trailerPadlenNhdr;
+    num pad = (16 - (size % 16)) % 16;
+    return pad;
   }
 }
