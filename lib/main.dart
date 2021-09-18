@@ -62,6 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
     {'group': 'second group', 'fields': 'second fields', 'bytes': '2'},
     {'group': 'third group', 'fields': 'third fields', 'bytes': '3'},
   ];
+  num totalSize = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +302,11 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               ]),
                           ],
-                        )
+                        ),
+                        Text(
+                          'Total IPsec packet size is $totalSize bytes.',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
                   ),
@@ -375,6 +380,7 @@ class _MyHomePageState extends State<MyHomePage> {
       print(
           'preparing list $originalPktSize $greEnabled $tunnelKeyEnabled $natEnabled $ipsecMode $chosenEspValue');
       tableRows.clear();
+      totalSize = 0;
       if (ipsecMode == 'Transport' && greEnabled == false) {
         // Original IP header
         tableRows.add({
@@ -382,24 +388,28 @@ class _MyHomePageState extends State<MyHomePage> {
           'fields': 'IPv4 header',
           'bytes': '20'
         });
+        totalSize += 20;
 
         if (natEnabled == true) {
           // NAT UDP header
           tableRows.add(
               {'group': 'NAT traversal', 'fields': 'UDP header', 'bytes': '8'});
+          totalSize += 8;
         }
 
         // ESP header
         tableRows.add({'group': 'ESP', 'fields': 'ESP header', 'bytes': '8'});
+        totalSize += 8;
 
         // ESP IV
         var espIv;
         if (chosenEspValue.contains('GCM')) {
-          espIv = '8';
+          espIv = 8;
         } else {
-          espIv = '16';
+          espIv = 16;
         }
         tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
+        totalSize += espIv;
 
         // Original payload
         var payload = originalPktSize - 20;
@@ -408,28 +418,32 @@ class _MyHomePageState extends State<MyHomePage> {
           'fields': 'Payload',
           'bytes': '$payload'
         });
+        totalSize += payload;
 
         // ESP trailer
         // Padding
         tableRows
             .add({'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '???'});
+        totalSize += 0;
         // Pad length and next header
         tableRows.add({
           'group': 'ESP trailer',
           'fields': 'pad length + next header',
           'bytes': '2'
         });
+        totalSize += 2;
         // ESP ICV
         var espIcv;
         if (chosenEspValue.contains('GCM')) {
-          espIcv = '16';
+          espIcv = 16;
         } else if (chosenEspValue.contains('SHA1')) {
-          espIcv = '12';
+          espIcv = 12;
         } else {
-          espIcv = '16';
+          espIcv = 16;
         }
         tableRows.add(
             {'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
+        totalSize += espIcv;
       }
     });
   }
