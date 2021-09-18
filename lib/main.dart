@@ -375,13 +375,34 @@ class _MyHomePageState extends State<MyHomePage> {
       print(
           'preparing list $originalPktSize $greEnabled $tunnelKeyEnabled $natEnabled $ipsecMode $chosenEspValue');
       tableRows.clear();
-      if (ipsecMode == 'Transport') {
+      if (ipsecMode == 'Transport' && greEnabled == false) {
+        // Original IP header
         tableRows.add({
           'group': 'Original packet',
           'fields': 'IPv4 header',
           'bytes': '20'
         });
+
+        if (natEnabled == true) {
+          // NAT UDP header
+          tableRows.add(
+              {'group': 'NAT traversal', 'fields': 'UDP header', 'bytes': '8'});
+        }
+
+        // ESP header
+        tableRows.add({'group': 'ESP', 'fields': 'ESP header', 'bytes': '8'});
+
+        // ESP IV
+        var espIv;
+        if (chosenEspValue.contains('GCM')) {
+          espIv = '8';
+        } else {
+          espIv = '16';
+        }
+        tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
+
         var payload = originalPktSize - 20;
+        // Original payload
         tableRows.add({
           'group': 'Original packet',
           'fields': 'Payload',
