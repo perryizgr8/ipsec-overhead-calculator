@@ -401,13 +401,35 @@ class _MyHomePageState extends State<MyHomePage> {
         }
         tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
 
-        var payload = originalPktSize - 20;
         // Original payload
+        var payload = originalPktSize - 20;
         tableRows.add({
           'group': 'Original packet',
           'fields': 'Payload',
           'bytes': '$payload'
         });
+
+        // ESP trailer
+        // Padding
+        tableRows
+            .add({'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '???'});
+        // Pad length and next header
+        tableRows.add({
+          'group': 'ESP trailer',
+          'fields': 'pad length + next header',
+          'bytes': '2'
+        });
+        // ESP ICV
+        var espIcv;
+        if (chosenEspValue.contains('GCM')) {
+          espIcv = '16';
+        } else if (chosenEspValue.contains('SHA1')) {
+          espIcv = '12';
+        } else {
+          espIcv = '16';
+        }
+        tableRows.add(
+            {'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
       }
     });
   }
