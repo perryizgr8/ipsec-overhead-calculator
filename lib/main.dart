@@ -55,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var natEnabled = false;
   // mode 0 = transport
   // mode 1 = tunnel
-  var ipsecMode = 0;
+  var ipsecMode = 'Transport';
   var chosenEspValue = 'AES128 + SHA1';
   var tableRows = [
     {'group': 'first group', 'fields': 'first fields', 'bytes': '1'},
@@ -189,13 +189,13 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                               Text('Transport'),
                               Radio(
-                                value: 0,
+                                value: 'Transport',
                                 groupValue: ipsecMode,
                                 onChanged: onModeChanged,
                               ),
                               Text('Tunnel'),
                               Radio(
-                                value: 1,
+                                value: 'Tunnel',
                                 groupValue: ipsecMode,
                                 onChanged: onModeChanged,
                               ),
@@ -371,7 +371,23 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void repopulate() {
-    print(
-        'preparing list $originalPktSize $greEnabled $tunnelKeyEnabled $natEnabled $ipsecMode $chosenEspValue');
+    setState(() {
+      print(
+          'preparing list $originalPktSize $greEnabled $tunnelKeyEnabled $natEnabled $ipsecMode $chosenEspValue');
+      tableRows.clear();
+      if (ipsecMode == 'Transport') {
+        tableRows.add({
+          'group': 'Original packet',
+          'fields': 'IPv4 header',
+          'bytes': '20'
+        });
+        var payload = originalPktSize - 20;
+        tableRows.add({
+          'group': 'Original packet',
+          'fields': 'Payload',
+          'bytes': '$payload'
+        });
+      }
+    });
   }
 }
