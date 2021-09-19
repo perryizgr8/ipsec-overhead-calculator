@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         // or simply save your changes to "hot reload" in a Flutter IDE).
         // Notice that the counter didn't reset back to zero; the application
         // is not restarted.
-        primarySwatch: Colors.blueGrey,
+        primarySwatch: Colors.lightBlue,
       ),
       home: MyHomePage(title: 'IPsec Overhead Calculator'),
     );
@@ -293,17 +293,36 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             ]),
                             for (var row in tableRows)
-                              TableRow(children: [
-                                TableCell(
-                                  child: Text(row['group'] as String),
-                                ),
-                                TableCell(
-                                  child: Text(row['fields'] as String),
-                                ),
-                                TableCell(
-                                  child: Text(row['bytes'] as String),
-                                ),
-                              ]),
+                              TableRow(
+                                  children: [
+                                    TableCell(
+                                      child: Text(
+                                        row['group'] as String,
+                                        style: TextStyle(
+                                          color: getTextColor(row['group']),
+                                        ),
+                                      ),
+                                    ),
+                                    TableCell(
+                                      child: Text(
+                                        row['fields'] as String,
+                                        style: TextStyle(
+                                          color: getTextColor(row['group']),
+                                        ),
+                                      ),
+                                    ),
+                                    TableCell(
+                                      child: Text(
+                                        row['bytes'] as String,
+                                        style: TextStyle(
+                                          color: getTextColor(row['group']),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  decoration: BoxDecoration(
+                                    color: getRowColor(row['group']),
+                                  )),
                           ],
                         ),
                         Text(
@@ -736,5 +755,67 @@ class _MyHomePageState extends State<MyHomePage> {
     tableRows
         .add({'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
     totalSize += espIcv;
+  }
+
+  getTextColor(group) {
+    return getColor('text', group);
+  }
+
+  getRowColor(group) {
+    return getColor('row', group);
+  }
+
+  getColor(String s, group) {
+    switch (group) {
+      case 'Original packet':
+        if (s == 'row') {
+          return Color(0xFFFEF9EF);
+        } else if (s == 'text') {
+          return Color(0xFF000000);
+        }
+        break;
+      case 'NAT traversal':
+        if (s == 'row') {
+          return Color(0xFF227C9D);
+        } else if (s == 'text') {
+          return Color(0xFFFFFFFF);
+        }
+        break;
+      case 'ESP':
+        if (s == 'row') {
+          return Color(0xFFFFCB77);
+        } else if (s == 'text') {
+          return Color(0xFF000000);
+        }
+        break;
+      case 'ESP trailer':
+        if (s == 'row') {
+          return Color(0xFFFFCB77);
+        } else if (s == 'text') {
+          return Color(0xFF000000);
+        }
+        break;
+      case 'New IPsec header':
+        if (s == 'row') {
+          return Color(0xFF17C3B2);
+        } else if (s == 'text') {
+          return Color(0xFFFFFFFF);
+        }
+        break;
+      case 'GRE':
+        if (s == 'row') {
+          return Color(0xFFFE6D73);
+        } else if (s == 'text') {
+          return Color(0xFFFFFFFF);
+        }
+        break;
+      default:
+        if (s == 'row') {
+          return Color(0xFFFFFFFF);
+        } else if (s == 'text') {
+          return Color(0xFF000000);
+        }
+        break;
+    }
   }
 }
