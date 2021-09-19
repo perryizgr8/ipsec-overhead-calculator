@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'IPsec Overhead Calculator',
       theme: ThemeData(
-        primarySwatch: Colors.lightBlue,
+        primarySwatch: Colors.blueGrey,
       ),
       home: MyHomePage(title: 'IPsec Overhead Calculator'),
     );
@@ -328,6 +328,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       setState(() {
         greEnabled = false;
+        tunnelKeyEnabled = false;
       });
     }
     print("gre = $greEnabled");
@@ -335,17 +336,23 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void onTunnelKeyToggle(bool value) {
-    if (tunnelKeyEnabled == false) {
-      setState(() {
-        tunnelKeyEnabled = true;
-      });
+    if (greEnabled == true) {
+      if (tunnelKeyEnabled == false) {
+        setState(() {
+          tunnelKeyEnabled = true;
+        });
+      } else {
+        setState(() {
+          tunnelKeyEnabled = false;
+        });
+      }
+      print("tunnel key = $tunnelKeyEnabled");
+      repopulate();
     } else {
       setState(() {
         tunnelKeyEnabled = false;
       });
     }
-    print("tunnel key = $tunnelKeyEnabled");
-    repopulate();
   }
 
   void onNatToggle(bool value) {
