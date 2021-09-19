@@ -66,6 +66,7 @@ class _MyHomePageState extends State<MyHomePage> {
   num totalSize = 0;
   num espIv = 0;
   num payload = 0;
+  num ipsecIpHdr = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -385,68 +386,9 @@ class _MyHomePageState extends State<MyHomePage> {
       tableRows.clear();
       totalSize = 0;
       if (ipsecMode == 'Transport' && greEnabled == false) {
-        // Original IP header
-        tableRows.add({
-          'group': 'Original packet',
-          'fields': 'IPv4 header',
-          'bytes': '20'
-        });
-        totalSize += 20;
-
-        if (natEnabled == true) {
-          // NAT UDP header
-          tableRows.add(
-              {'group': 'NAT traversal', 'fields': 'UDP header', 'bytes': '8'});
-          totalSize += 8;
-        }
-
-        // ESP header
-        tableRows.add({'group': 'ESP', 'fields': 'ESP header', 'bytes': '8'});
-        totalSize += 8;
-
-        // ESP IV
-        if (chosenEspValue.contains('GCM')) {
-          espIv = 8;
-        } else {
-          espIv = 16;
-        }
-        tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
-        totalSize += espIv;
-
-        // Original payload
-        payload = originalPktSize - 20;
-        tableRows.add({
-          'group': 'Original packet',
-          'fields': 'Payload',
-          'bytes': '$payload'
-        });
-        totalSize += payload;
-
-        // ESP trailer
-        // Padding
-        num padding = calculatePadding();
-        tableRows.add(
-            {'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '$padding'});
-        totalSize += padding;
-        // Pad length and next header
-        tableRows.add({
-          'group': 'ESP trailer',
-          'fields': 'pad length + next header',
-          'bytes': '2'
-        });
-        totalSize += 2;
-        // ESP ICV
-        var espIcv;
-        if (chosenEspValue.contains('GCM')) {
-          espIcv = 16;
-        } else if (chosenEspValue.contains('SHA1')) {
-          espIcv = 12;
-        } else {
-          espIcv = 16;
-        }
-        tableRows.add(
-            {'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
-        totalSize += espIcv;
+        transportWithoutGre();
+      } else if (ipsecMode == 'Transport' && greEnabled == true) {
+        transportWithGre();
       }
     });
   }
@@ -466,21 +408,166 @@ class _MyHomePageState extends State<MyHomePage> {
   num get4Pad() {
     // ESP header + IV + GRE IP header + GRE header + GRE key + IPsec IP header + Payload + Trailer(2 bytes)
     num espHeader = 8;
-    // TODO GRE
-    // TODO IPsec IP header
+    // TODO GRE IP header
+    num greHeader = greEnabled ? 4 : 0;
+    num greTunnelKey = tunnelKeyEnabled ? 4 : 0;
     num trailerPadlenNhdr = 2;
-    num size = espHeader + espIv + payload + trailerPadlenNhdr;
+    num size = espHeader +
+        espIv +
+        greHeader +
+        greTunnelKey +
+        ipsecIpHdr +
+        payload +
+        trailerPadlenNhdr;
     num pad = (4 - (size % 4)) % 4;
+    print('4pad size=$size pad=$pad');
     return pad;
   }
 
   num get16Pad() {
     // IPsec IP header + GRE IP header + GRE header + GRE key + Payload + Trailer
-    // TODO GRE
-    // TODO IPsec IP header
+    // TODO GRE IP header
+    num greHeader = greEnabled ? 4 : 0;
+    num greTunnelKey = tunnelKeyEnabled ? 4 : 0;
     num trailerPadlenNhdr = 2;
-    num size = payload + trailerPadlenNhdr;
+    num size =
+        ipsecIpHdr + greHeader + greTunnelKey + payload + trailerPadlenNhdr;
     num pad = (16 - (size % 16)) % 16;
+    print('16pad size=$size pad=$pad');
     return pad;
+  }
+
+  void transportWithoutGre() {
+    // Original IP header
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'IPv4 header', 'bytes': '20'});
+    totalSize += 20;
+
+    if (natEnabled == true) {
+      // NAT UDP header
+      tableRows.add(
+          {'group': 'NAT traversal', 'fields': 'UDP header', 'bytes': '8'});
+      totalSize += 8;
+    }
+
+    // ESP header
+    tableRows.add({'group': 'ESP', 'fields': 'ESP header', 'bytes': '8'});
+    totalSize += 8;
+
+    // ESP IV
+    if (chosenEspValue.contains('GCM')) {
+      espIv = 8;
+    } else {
+      espIv = 16;
+    }
+    tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
+    totalSize += espIv;
+
+    // Original payload
+    payload = originalPktSize - 20;
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'Payload', 'bytes': '$payload'});
+    totalSize += payload;
+
+    // ESP trailer
+    // Padding
+    num padding = calculatePadding();
+    tableRows.add(
+        {'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '$padding'});
+    totalSize += padding;
+    // Pad length and next header
+    tableRows.add({
+      'group': 'ESP trailer',
+      'fields': 'pad length + next header',
+      'bytes': '2'
+    });
+    totalSize += 2;
+    // ESP ICV
+    var espIcv;
+    if (chosenEspValue.contains('GCM')) {
+      espIcv = 16;
+    } else if (chosenEspValue.contains('SHA1')) {
+      espIcv = 12;
+    } else {
+      espIcv = 16;
+    }
+    tableRows
+        .add({'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
+    totalSize += espIcv;
+  }
+
+  void transportWithGre() {
+    // New IPsec IP header
+    tableRows.add(
+        {'group': 'New IPsec header', 'fields': 'IPv4 header', 'bytes': '20'});
+    totalSize += 20;
+    ipsecIpHdr = 20;
+
+    if (natEnabled == true) {
+      // NAT UDP header
+      tableRows.add(
+          {'group': 'NAT traversal', 'fields': 'UDP header', 'bytes': '8'});
+      totalSize += 8;
+    }
+
+    // ESP header
+    tableRows.add({'group': 'ESP', 'fields': 'ESP header', 'bytes': '8'});
+    totalSize += 8;
+
+    // ESP IV
+    if (chosenEspValue.contains('GCM')) {
+      espIv = 8;
+    } else {
+      espIv = 16;
+    }
+    tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
+    totalSize += espIv;
+
+    // GRE header
+    tableRows.add({'group': 'GRE', 'fields': 'GRE Header', 'bytes': '4'});
+    totalSize += 4;
+
+    // GRE tunnel key
+    if (tunnelKeyEnabled == true) {
+      tableRows.add({'group': 'GRE', 'fields': 'GRE tunnel key', 'bytes': '4'});
+      totalSize += 4;
+    }
+
+    // Original IP header
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'IPv4 header', 'bytes': '20'});
+    totalSize += 20;
+
+    // Original payload
+    payload = originalPktSize - 20;
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'Payload', 'bytes': '$payload'});
+    totalSize += payload;
+
+    // ESP trailer
+    // Padding
+    num padding = calculatePadding();
+    tableRows.add(
+        {'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '$padding'});
+    totalSize += padding;
+    // Pad length and next header
+    tableRows.add({
+      'group': 'ESP trailer',
+      'fields': 'pad length + next header',
+      'bytes': '2'
+    });
+    totalSize += 2;
+    // ESP ICV
+    var espIcv;
+    if (chosenEspValue.contains('GCM')) {
+      espIcv = 16;
+    } else if (chosenEspValue.contains('SHA1')) {
+      espIcv = 12;
+    } else {
+      espIcv = 16;
+    }
+    tableRows
+        .add({'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
+    totalSize += espIcv;
   }
 }
