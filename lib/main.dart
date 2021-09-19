@@ -385,6 +385,10 @@ class _MyHomePageState extends State<MyHomePage> {
           transportWithoutGre();
         } else if (ipsecMode == 'Transport' && greEnabled == true) {
           transportWithGre();
+        } else if (ipsecMode == 'Tunnel' && greEnabled == false) {
+          tunnelWithoutGre();
+        } else if (ipsecMode == 'Tunnel' && greEnabled == true) {
+          tunnelWithGre();
         }
       }
     });
@@ -575,4 +579,71 @@ class _MyHomePageState extends State<MyHomePage> {
     payload = 0;
     ipsecIpHdr = 0;
   }
+
+  void tunnelWithoutGre() {
+    // New IPsec IP header
+    tableRows.add(
+        {'group': 'New IPsec header', 'fields': 'IPv4 header', 'bytes': '20'});
+    totalSize += 20;
+    ipsecIpHdr = 20;
+
+    if (natEnabled == true) {
+      // NAT UDP header
+      tableRows.add(
+          {'group': 'NAT traversal', 'fields': 'UDP header', 'bytes': '8'});
+      totalSize += 8;
+    }
+
+    // ESP header
+    tableRows.add({'group': 'ESP', 'fields': 'ESP header', 'bytes': '8'});
+    totalSize += 8;
+
+    // ESP IV
+    if (chosenEspValue.contains('GCM')) {
+      espIv = 8;
+    } else {
+      espIv = 16;
+    }
+    tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
+    totalSize += espIv;
+
+    // Original IP header
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'IPv4 header', 'bytes': '20'});
+    totalSize += 20;
+
+    // Original payload
+    payload = originalPktSize - 20;
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'Payload', 'bytes': '$payload'});
+    totalSize += payload;
+
+    // ESP trailer
+    // Padding
+    num padding = calculatePadding();
+    tableRows.add(
+        {'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '$padding'});
+    totalSize += padding;
+    // Pad length and next header
+    tableRows.add({
+      'group': 'ESP trailer',
+      'fields': 'pad length + next header',
+      'bytes': '2'
+    });
+    totalSize += 2;
+    // ESP ICV
+    var espIcv;
+    if (chosenEspValue.contains('GCM')) {
+      espIcv = 16;
+    } else if (chosenEspValue.contains('SHA1')) {
+      espIcv = 12;
+    } else {
+      espIcv = 16;
+    }
+    tableRows
+        .add({'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
+    totalSize += espIcv;
+  }
+
+  void tunnelWithGre() {}
 }
