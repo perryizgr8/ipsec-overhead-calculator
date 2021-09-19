@@ -63,6 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
   num espIv = 0;
   num payload = 0;
   num ipsecIpHdr = 0;
+  num greIpHdr = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -409,12 +410,12 @@ class _MyHomePageState extends State<MyHomePage> {
   num get4Pad() {
     // ESP header + IV + GRE IP header + GRE header + GRE key + IPsec IP header + Payload + Trailer(2 bytes)
     num espHeader = 8;
-    // TODO GRE IP header
     num greHeader = greEnabled ? 4 : 0;
     num greTunnelKey = tunnelKeyEnabled ? 4 : 0;
     num trailerPadlenNhdr = 2;
     num size = espHeader +
         espIv +
+        greIpHdr +
         greHeader +
         greTunnelKey +
         ipsecIpHdr +
@@ -427,12 +428,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   num get16Pad() {
     // IPsec IP header + GRE IP header + GRE header + GRE key + Payload + Trailer
-    // TODO GRE IP header
     num greHeader = greEnabled ? 4 : 0;
     num greTunnelKey = tunnelKeyEnabled ? 4 : 0;
     num trailerPadlenNhdr = 2;
-    num size =
-        ipsecIpHdr + greHeader + greTunnelKey + payload + trailerPadlenNhdr;
+    num size = ipsecIpHdr +
+        greIpHdr +
+        greHeader +
+        greTunnelKey +
+        payload +
+        trailerPadlenNhdr;
     num pad = (16 - (size % 16)) % 16;
     print('16pad size=$size pad=$pad');
     return pad;
@@ -578,6 +582,7 @@ class _MyHomePageState extends State<MyHomePage> {
     espIv = 0;
     payload = 0;
     ipsecIpHdr = 0;
+    greIpHdr = 0;
   }
 
   void tunnelWithoutGre() {
@@ -645,5 +650,83 @@ class _MyHomePageState extends State<MyHomePage> {
     totalSize += espIcv;
   }
 
-  void tunnelWithGre() {}
+  void tunnelWithGre() {
+    // New IPsec IP header
+    tableRows.add(
+        {'group': 'New IPsec header', 'fields': 'IPv4 header', 'bytes': '20'});
+    totalSize += 20;
+    ipsecIpHdr = 20;
+
+    if (natEnabled == true) {
+      // NAT UDP header
+      tableRows.add(
+          {'group': 'NAT traversal', 'fields': 'UDP header', 'bytes': '8'});
+      totalSize += 8;
+    }
+
+    // ESP header
+    tableRows.add({'group': 'ESP', 'fields': 'ESP header', 'bytes': '8'});
+    totalSize += 8;
+
+    // ESP IV
+    if (chosenEspValue.contains('GCM')) {
+      espIv = 8;
+    } else {
+      espIv = 16;
+    }
+    tableRows.add({'group': 'ESP', 'fields': 'ESP IV', 'bytes': '$espIv'});
+    totalSize += espIv;
+
+    // New GRE IP header
+    tableRows.add({'group': 'GRE', 'fields': 'New IP Header', 'bytes': '20'});
+    totalSize += 20;
+    greIpHdr = 20;
+
+    // GRE header
+    tableRows.add({'group': 'GRE', 'fields': 'GRE Header', 'bytes': '4'});
+    totalSize += 4;
+
+    // GRE tunnel key
+    if (tunnelKeyEnabled == true) {
+      tableRows.add({'group': 'GRE', 'fields': 'GRE tunnel key', 'bytes': '4'});
+      totalSize += 4;
+    }
+
+    // Original IP header
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'IPv4 header', 'bytes': '20'});
+    totalSize += 20;
+
+    // Original payload
+    payload = originalPktSize - 20;
+    tableRows.add(
+        {'group': 'Original packet', 'fields': 'Payload', 'bytes': '$payload'});
+    totalSize += payload;
+
+    // ESP trailer
+    // Padding
+    num padding = calculatePadding();
+    tableRows.add(
+        {'group': 'ESP trailer', 'fields': 'Padding', 'bytes': '$padding'});
+    totalSize += padding;
+    // Pad length and next header
+    tableRows.add({
+      'group': 'ESP trailer',
+      'fields': 'pad length + next header',
+      'bytes': '2'
+    });
+    totalSize += 2;
+    // ESP ICV
+    var espIcv;
+    if (chosenEspValue.contains('GCM')) {
+      espIcv = 16;
+    } else if (chosenEspValue.contains('SHA1')) {
+      espIcv = 12;
+    } else {
+      espIcv = 16;
+    }
+    tableRows
+        .add({'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
+    totalSize += espIcv;
+  }
 }
