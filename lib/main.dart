@@ -64,6 +64,8 @@ class _MyHomePageState extends State<MyHomePage> {
   num payload = 0;
   num ipsecIpHdr = 0;
   num greIpHdr = 0;
+  num overhead = 0;
+  num overheadPc = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -308,6 +310,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           'Total IPsec packet size is $totalSize bytes.',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
+                        Text(
+                          'Total overhead is $overhead bytes ($overheadPc%).',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ],
                     ),
                   ),
@@ -392,6 +398,8 @@ class _MyHomePageState extends State<MyHomePage> {
           tunnelWithGre();
         }
       }
+      overhead = totalSize - originalPktSize;
+      overheadPc = 100 * (overhead / originalPktSize);
     });
   }
 
