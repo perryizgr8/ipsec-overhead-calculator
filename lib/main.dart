@@ -58,11 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
   // mode 1 = tunnel
   var ipsecMode = 'Transport';
   var chosenEspValue = 'AES128 + SHA1';
-  var tableRows = [
-    {'group': 'first group', 'fields': 'first fields', 'bytes': '1'},
-    {'group': 'second group', 'fields': 'second fields', 'bytes': '2'},
-    {'group': 'third group', 'fields': 'third fields', 'bytes': '3'},
-  ];
+  var tableRows = [];
   num totalSize = 0;
   num espIv = 0;
   num payload = 0;
@@ -383,12 +379,13 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       print(
           'preparing list $originalPktSize $greEnabled $tunnelKeyEnabled $natEnabled $ipsecMode $chosenEspValue');
-      tableRows.clear();
-      totalSize = 0;
-      if (ipsecMode == 'Transport' && greEnabled == false) {
-        transportWithoutGre();
-      } else if (ipsecMode == 'Transport' && greEnabled == true) {
-        transportWithGre();
+      clearEverything();
+      if (originalPktSize >= 28) {
+        if (ipsecMode == 'Transport' && greEnabled == false) {
+          transportWithoutGre();
+        } else if (ipsecMode == 'Transport' && greEnabled == true) {
+          transportWithGre();
+        }
       }
     });
   }
@@ -569,5 +566,13 @@ class _MyHomePageState extends State<MyHomePage> {
     tableRows
         .add({'group': 'ESP trailer', 'fields': 'ESP ICV', 'bytes': '$espIcv'});
     totalSize += espIcv;
+  }
+
+  void clearEverything() {
+    tableRows.clear();
+    totalSize = 0;
+    espIv = 0;
+    payload = 0;
+    ipsecIpHdr = 0;
   }
 }
