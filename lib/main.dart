@@ -486,7 +486,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // Pad length and next header
     tableRows.add({
       'group': 'ESP trailer',
-      'fields': 'pad length + next header',
+      'fields': 'Pad length + next header',
       'bytes': '2'
     });
     totalSize += 2;
