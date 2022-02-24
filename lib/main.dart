@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  FirebaseAnalytics analytics = FirebaseAnalytics.instance;
   var originalPktSize = 0;
   var greEnabled = false;
   var tunnelKeyEnabled = false;
@@ -51,6 +53,16 @@ class _MyHomePageState extends State<MyHomePage> {
   num greIpHdr = 0;
   num overhead = 0;
   num overheadPc = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _logAppOpen();
+  }
+
+  void _logAppOpen() async {
+    await analytics.logAppOpen();
+  }
 
   @override
   Widget build(BuildContext context) {
